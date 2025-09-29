@@ -1,0 +1,61 @@
+﻿@page "/products"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ProductApp.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>ТОВАРЫ</PageTitle>
+
+<h1>Товары - @CategoryName</h1>
+
+<p>
+    <a href="products/create?categoryid=@CategoryId">Создать новый товар</a>
+</p>
+
+<p>
+    <a href="categories">Вернуться к списку категорий</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Products">
+    <PropertyColumn Title="Наименование товара" Property="product => product.ProductName" />
+    <PropertyColumn Title="Описание" Property="product => product.Description" />
+    <PropertyColumn Title="Цена" Property="product => product.Price" />
+    <PropertyColumn Title="Код категории" Property="product => product.CategoryId" />
+    <PropertyColumn Title="Количество заказов" Property="product => product.Orders!.Count()" />
+
+    <TemplateColumn Context="product">
+        <a href="@($"orders?productid={product.ProductId}")">Заказы</a> |
+        <a href="@($"products/edit?productid={product.ProductId}")">Изменить</a> |
+        <a href="@($"products/details?productid={product.ProductId}")">Открыть</a> |
+        <a href="@($"products/productid={product.ProductId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? CategoryId { get; set; }
+
+    public string? CategoryName { get; set; }
+
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+        if(CategoryId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+
+        var Category = context.Categories.FirstOrDefault(d => d.CategoryId == CategoryId);
+        if (CategoryId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+        CategoryName = Category!.CategoryName;
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

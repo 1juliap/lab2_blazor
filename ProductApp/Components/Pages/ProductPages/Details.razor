@@ -1,0 +1,51 @@
+﻿@page "/products/details"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>ПРОСМОТР</PageTitle>
+
+<h1>Детали товара</h1>
+
+<div>
+    <hr />
+    @if (product is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Наименование товара</dt>
+            <dd class="col-sm-10">@product.ProductName</dd>
+            <dt class="col-sm-2">Описание</dt>
+            <dd class="col-sm-10">@product.Description</dd>
+            <dt class="col-sm-2">Цена</dt>
+            <dd class="col-sm-10">@product.Price</dd>
+            <dt class="col-sm-2">Код категории</dt>
+            <dd class="col-sm-10">@product.CategoryId</dd>
+        </dl>
+        <div>
+            <a href="@($"/products/edit?productid={product.ProductId}")">Изменить</a> |
+            <a href="@($"/products?categoryid="+product.CategoryId.ToString())">Вернуться к списку товаров</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Product? product;
+
+    [SupplyParameterFromQuery]
+    private int ProductId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        product = await context.Products.FirstOrDefaultAsync(m => m.ProductId == ProductId);
+
+        if (product is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

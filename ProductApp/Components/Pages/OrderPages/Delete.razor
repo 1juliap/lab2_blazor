@@ -1,0 +1,68 @@
+﻿@page "/orders/delete"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>УДАЛЕНИЕ</PageTitle>
+
+<h1>Удалить заказ</h1>
+
+<p>Вы уверены, что хотите удалить заказ?</p>
+<div>
+    <hr />
+    @if (order is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Количество</dt>
+            <dd class="col-sm-10">@order.Quantity</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Дата заказа</dt>
+            <dd class="col-sm-10">@order.OrderDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Сумма</dt>
+            <dd class="col-sm-10">@order.TotalCost</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Код товара</dt>
+            <dd class="col-sm-10">@order.ProductId</dd>
+        </dl>
+        <EditForm method="post" Model="order" OnValidSubmit="DeleteOrder" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(order is null)">Удалить</button> |
+            <a href="/orders?productid=@order!.ProductId">Вернуться к списку заказов</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Order? order;
+
+    private int ProductId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private int OrderId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        order = await context.Orders.FirstOrDefaultAsync(m => m.OrderId == OrderId);
+
+        if (order is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteOrder()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Orders.Remove(order!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/orders?productid=" + ProductId);
+    }
+}

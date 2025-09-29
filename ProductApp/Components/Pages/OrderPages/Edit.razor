@@ -1,0 +1,101 @@
+﻿@page "/orders/edit"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>РЕДАКТИРОВАНИЕ</PageTitle>
+
+<h1>Изменить заказ</h1>
+
+<hr />
+@if (Order is null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Order" OnValidSubmit="UpdateOrder" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Order.OrderId" value="@Order.OrderId" />
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Количество:</label>
+                    <InputNumber id="quantity" @bind-Value="Order.Quantity" class="form-control" />
+                    <ValidationMessage For="() => Order.Quantity" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="orderdate" class="form-label">Дата заказа:</label>
+                    <InputDate id="orderdate" @bind-Value="Order.OrderDate" class="form-control" />
+                    <ValidationMessage For="() => Order.OrderDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="totalcost" class="form-label">Сумма:</label>
+                    <InputNumber id="totalcost" @bind-Value="Order.TotalCost" class="form-control" />
+                    <ValidationMessage For="() => Order.TotalCost" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <input type="hidden" name="Order.ProductId" @bind="Order.ProductId" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/orders?productid=@OrderId">Вернуться к списку заказов</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int OrderId { get; set; }
+
+    [SupplyParameterFromForm]
+    private Order? Order { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Order ??= await context.Orders.FirstOrDefaultAsync(m => m.OrderId == OrderId);
+
+        if (Order is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateOrder()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Order!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!OrderExists(Order!.OrderId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/orders?productid=" + Order!.ProductId.ToString());
+    }
+
+    private bool OrderExists(int orderid)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Orders.Any(e => e.OrderId == orderid);
+    }
+}

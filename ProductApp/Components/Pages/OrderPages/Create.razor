@@ -1,0 +1,70 @@
+﻿@page "/orders/create"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>СОЗДАНИЕ</PageTitle>
+
+<h1>Создать заказ</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Order" OnValidSubmit="AddOrder" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Количество:</label> 
+                <InputNumber id="quantity" @bind-Value="Order.Quantity" class="form-control" /> 
+                <ValidationMessage For="() => Order.Quantity" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="orderdate" class="form-label">Дата заказа:</label> 
+                <InputDate id="orderdate" @bind-Value="Order.OrderDate" class="form-control" /> 
+                <ValidationMessage For="() => Order.OrderDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="totalcost" class="form-label">Сумма:</label> 
+                <InputNumber id="totalcost" @bind-Value="Order.TotalCost" class="form-control" /> 
+                <ValidationMessage For="() => Order.TotalCost" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <input type="hidden" name="Order.ProductId" @bind="Order.ProductId" class="form-control">
+            </div>        
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/orders?productid=@ProductId">Вернуться к списку заказов</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? ProductId { get; set; }
+
+    [SupplyParameterFromForm]
+    private Order Order { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        if (ProductId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+        Order.ProductId = ProductId ?? 0;
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddOrder()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Orders.Add(Order);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/orders?productid=" + ProductId.ToString());
+    }
+}

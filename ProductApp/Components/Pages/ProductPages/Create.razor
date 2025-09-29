@@ -1,0 +1,73 @@
+﻿@page "/products/create"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>СОЗДАНИЕ</PageTitle>
+
+<h1>Создать товар</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Product" OnValidSubmit="AddProduct" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="productname" class="form-label">Наименование товара:</label> 
+                <InputText id="productname" @bind-Value="Product.ProductName" class="form-control" /> 
+                <ValidationMessage For="() => Product.ProductName" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Описание:</label> 
+                <InputText id="description" @bind-Value="Product.Description" class="form-control" /> 
+                <ValidationMessage For="() => Product.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="price" class="form-label">Цена:</label> 
+                <InputNumber id="price" @bind-Value="Product.Price" class="form-control" /> 
+                <ValidationMessage For="() => Product.Price" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <input type="hidden" name="Product.CategoryId" @bind="Product.CategoryId" class="form-control">
+                @* <label for="categoryid" class="form-label">Код категории:</label> 
+                <InputNumber id="categoryid" @bind-Value="Product.CategoryId" class="form-control" /> 
+                <ValidationMessage For="() => Product.CategoryId" class="text-danger" />  *@
+            </div>        
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/products?categoryid=@CategoryId">Вернуться к списку товаров</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? CategoryId { get; set; }
+
+    [SupplyParameterFromForm]
+    private Product Product { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        if (CategoryId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+        Product.CategoryId = CategoryId ?? 0;
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddProduct()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Products.Add(Product);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/products?categoryid="+CategoryId.ToString());
+    }
+}

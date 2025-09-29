@@ -1,0 +1,43 @@
+﻿@page "/categories/create"
+@using Microsoft.EntityFrameworkCore
+@using ProductApp.Data
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>СОЗДАНИЕ</PageTitle>
+
+<h1>Создать категорию</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="categoryname" class="form-label">Наименование категории:</label> 
+                <InputText id="categoryname" @bind-Value="Category.CategoryName" class="form-control" /> 
+                <ValidationMessage For="() => Category.CategoryName" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/categories">Вернуться к списку категорий товаров</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Category Category { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCategory()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Categories.Add(Category);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/categories");
+    }
+}

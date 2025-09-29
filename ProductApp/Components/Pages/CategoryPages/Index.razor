@@ -1,0 +1,37 @@
+﻿@page "/categories"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ProductApp.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>КАТЕГОРИИ ТОВАРОВ</PageTitle>
+
+<h1>Категории</h1>
+
+<p>
+    <a href="categories/create">Cоздать новую категорию</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Categories">
+    <PropertyColumn Title="Наименование категории" Property="category => category.CategoryName" />
+    <PropertyColumn Title="Количество товаров в категории" Property="category => category.Products!.Count()" />
+
+    <TemplateColumn Context="category">
+        <a href="@($"products?categoryid={category.CategoryId}")">Товары категории</a> |
+        <a href="@($"categories/edit?categoryid={category.CategoryId}")">Изменить</a> |
+        <a href="@($"categories/details?categoryid={category.CategoryId}")">Открыть</a> |
+        <a href="@($"categories/delete?categoryid={category.CategoryId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

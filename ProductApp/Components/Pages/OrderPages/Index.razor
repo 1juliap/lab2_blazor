@@ -1,0 +1,60 @@
+﻿@page "/orders"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ProductApp.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<ProductApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>ЗАКАЗЫ</PageTitle>
+
+<h1>Заказы</h1>
+
+<p>
+    <a href="orders/create?productid=@ProductId">Создать новый заказ</a>
+</p>
+
+<p>
+    <a href="categories">Вернуться к списку категорий</a>
+</p>
+
+
+<QuickGrid Class="table" Items="context.Orders">
+    <PropertyColumn Title="Количество" Property="order => order.Quantity" />
+    <PropertyColumn Title="Дата заказа" Property="order => order.OrderDate" />
+    <PropertyColumn Title="Сумма" Property="order => order.TotalCost" />
+    <PropertyColumn Title="Код продукта" Property="order => order.ProductId" />
+
+    <TemplateColumn Context="order">
+        <a href="@($"orders/edit?orderid={order.OrderId}")">Изменить</a> |
+        <a href="@($"orders/details?orderid={order.OrderId}")">Открыть</a> |
+        <a href="@($"orders/delete?orderid={order.OrderId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? ProductId { get; set; }
+
+    public string? ProductName { get; set; }
+
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+        if (ProductId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+
+        var Product = context.Products.FirstOrDefault(d => d.ProductId == ProductId);
+        if (ProductId == null)
+        {
+            NavigationManager.NavigateTo("not found");
+        }
+        ProductName = Product!.ProductName;
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
