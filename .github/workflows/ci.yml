@@ -27,6 +27,7 @@ jobs:
           name: hadolint-report
           path: hadolint-report.txt
 
+
   build:
     needs: lint
     runs-on: ubuntu-latest
@@ -34,7 +35,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: BuildDocker image
         run: |
           docker build -t myapp:test -f ProductApp/Dockerfile .
           echo "Docker image built successfully!"
@@ -54,7 +55,7 @@ jobs:
           name: build-log
           path: build-log.txt
 
-publish:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -75,4 +76,3 @@ publish:
           file: ProductApp/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
-
