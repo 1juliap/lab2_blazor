@@ -14,9 +14,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        working-directory: ProductApp
         run: |
-          docker build -t myapp:test .
+          docker build -t myapp:test -f ProductApp/Dockerfile .
           echo "Docker image built successfully!"
 
       - name: Test container
